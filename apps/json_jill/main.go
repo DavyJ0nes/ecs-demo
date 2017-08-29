@@ -16,7 +16,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/data", dataHandler)
 	log.Println("Starting JSON Jill Server")
-	log.Fatal(http.ListenAndServe(":8000", mux))
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
 
 func dataHandler(w http.ResponseWriter, req *http.Request) {
