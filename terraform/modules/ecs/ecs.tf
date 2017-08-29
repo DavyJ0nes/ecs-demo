@@ -161,14 +161,86 @@ resource "aws_alb_listener_rule" "api" {
   }
 }
 
+#---------- CREATE ECS INSTNCE ROLE ----------#
+
+resource "aws_iam_role" "ecs_instance" {
+  name        = "${var.prefix}-${var.env}-ecs_instance-role"
+  description = "Owner: ${var.owner}"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+#---------- CREATE ECS INSTANCE ROLE POLICY ----------#
+
+resource "aws_iam_role_policy" "ecs_instance_policy" {
+  name = "${var.prefix}-${var.env}-ecs-policy"
+  role = "${aws_iam_role.ecs_instance.name}"
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecs:CreateCluster",
+        "ecs:DeregisterContainerInstance",
+        "ecs:DiscoverPollEndpoint",
+        "ecs:Poll",
+        "ecs:RegisterContainerInstance",
+        "ecs:StartTelemetrySession",
+        "ecs:Submit*",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+POLICY
+}
+
+#---------- ECS INSTANCE PROFILE ----------#
+
+resource "aws_iam_role_policy_attachment" "ecsInstanceRole" {
+  role       = "${aws_iam_role.ecs_instance.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+#---------- ECS INSTANCE PROFILE ----------#
+
+resource "aws_iam_instance_profile" "profile" {
+  name = "${var.prefix}-${var.env}-ecs_instance-profile"
+  role = "${aws_iam_role.ecs_instance.name}"
+}
+
 #---------- CREATE ECS ASG LAUNCH CONFIGURATION ----------#
 
 resource "aws_launch_configuration" "ecs_lc" {
-  name_prefix     = "${var.prefix}-${var.env}-ecs"
-  image_id        = "${var.ami}"
-  instance_type   = "${var.instance_type}"
-  key_name        = "${var.key_name}"
-  security_groups = ["${aws_security_group.asg.id}"]
+  name_prefix          = "${var.prefix}-${var.env}-ecs"
+  image_id             = "${var.ami}"
+  instance_type        = "${var.instance_type}"
+  iam_instance_profile = "${aws_iam_instance_profile.profile.name}"
+  key_name             = "${var.key_name}"
+  security_groups      = ["${aws_security_group.asg.id}"]
 
   user_data = <<USERDATA
   #!/bin/bash
@@ -192,8 +264,9 @@ resource "aws_autoscaling_group" "asg" {
 
   # force_delete         = true
   launch_configuration = "${aws_launch_configuration.ecs_lc.name}"
-  load_balancers       = ["${aws_alb.ecs_alb.id}"]
-  vpc_zone_identifier  = ["${split(",", var.subnets)}"]
+
+  # load_balancers       = ["${var.prefix}-${var.env}-alb"]
+  vpc_zone_identifier = ["${split(",", var.subnets)}"]
 
   depends_on = ["aws_launch_configuration.ecs_lc"]
 

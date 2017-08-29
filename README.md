@@ -6,7 +6,7 @@ This is a collection of demo Golang, dockerised web applications that are deploy
 They are super basic and lightweight and their only purpose is to be used for demoing how to use ECS with an Application Load Balancer and Content/Path based routing.
 
 ## How to deploy
-<< TO BE COMPLETED >>
+There is a Makefile within the root of the repository that contains helper commands to help easiliy deploy the artifacts to your AWS cloud.
 
 ## How to test
 << TO BE COMPLETED >>

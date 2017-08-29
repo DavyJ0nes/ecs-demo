@@ -8,9 +8,8 @@ all: run
 # or to publish the :latest version to the specified registry as :1.0.0, run:
 # $ make publish version=1.0.0
 
-app = fred
-name = ecs-demo/${app}
-registry = name_of_registry
+app = davyj-ao-training-dev-ecr
+registry = registry_name
 version ?= latest
 local_port = 8083
 
@@ -20,17 +19,18 @@ binary:
 
 image: binary
 	$(call blue, "# Building Docker Image...")
-	docker build -t ${name}:${version} .
+	docker build -t ${app}:${version} .
 	$(MAKE) clean
 
 run: image
 	$(call blue, "# Running Docker Image Locally...")
-	docker run -i -t --rm -p ${local_port}:8080 ${name}:${version} 
+	docker run -i -t --rm -p ${local_port}:8080 ${app}:${version} 
 
 publish:  
 	$(call blue, "# Publishing Docker Image to Registry...")
-	docker tag ${name}:latest ${registry}/${name}:${version}
-	docker push ${registry}/${name}:${version} 
+	$(shell aws ecr get-login --no-include-email --region eu-west-1)
+	docker tag ${app}:latest ${registry}:${version}
+	docker push ${registry}:${version} 
 
 clean: 
 	@rm -f ${app} 

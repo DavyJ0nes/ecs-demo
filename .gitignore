@@ -1,2 +1,5 @@
+*.DS_Store*
+*Gemfile.lock*
 *terraform/env/dev/dev.tfvars*
 *.terraform*
+*tfstate*
