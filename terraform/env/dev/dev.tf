@@ -1,7 +1,5 @@
-# Creates an ECS Cluster behind ALB
 # Development Stack
 # Davy Jones 2017
-# Cloudreach
 
 terraform {
   backend "s3" {
@@ -28,18 +26,26 @@ module "vpc" {
   private_subnets = "${var.private_subnets}"
 }
 
-#---------- SET UP ECR REPO ----------#
+#---------- SET UP API ECR REPO ----------#
 
-module "ecr" {
+module "api_ecr" {
   source = "../../modules/ecr"
-  env    = "${var.env}"
   prefix = "${var.prefix}"
+  app    = "api"
+}
+
+#---------- SET UP FRONT END ECR REPO ----------#
+
+module "frontend_ecr" {
+  source = "../../modules/ecr"
+  prefix = "${var.prefix}"
+  app    = "frontend"
 }
 
 #---------- SET UP ECS CLUSTER ----------#
 
-module "ecs" {
-  source           = "../../modules/ecs"
+module "ecs_cluster" {
+  source           = "../../modules/ecs/cluster"
   env              = "${var.env}"
   prefix           = "${var.prefix}"
   owner            = "${var.owner}"
@@ -51,14 +57,35 @@ module "ecs" {
   max_size         = "${var.ecs_max_size}"
   min_size         = "${var.ecs_min_size}"
   desired_capacity = "${var.ecs_desired_capacity}"
-  subnets          = "${module.vpc.private_subnet_ids}"
+  subnets          = "${module.vpc.public_subnet_ids}"
 }
 
-#---------- DEPLOY CONTAINERS ---------#
+#---------- CREATE ECS SERVICE ---------#
+
+
+# module "ecs_service" {
+#   source  = "../../modules/ecs/service"
+#   env     = "${var.env}"
+#   prefix  = "${var.prefix}"
+#   owner   = "${var.owner}"
+#   cluster = "${module.ecs_cluster.name}"
+# }
 
 
 #---------- SET UP TESTING LAMBDA --------#
 
 
+# module "lambda" {}
+
+
 #---------- SET UP CLOUDWATCH MONITORING ---------#
+
+
+# module "cloudwatch" {}
+
+
+#---------- SET UP ROUTE 53 ENDPOINT ---------#
+
+
+# module "route53" {}
 

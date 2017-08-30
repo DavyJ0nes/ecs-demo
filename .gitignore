@@ -3,3 +3,4 @@
 *terraform/env/dev/dev.tfvars*
 *.terraform*
 *tfstate*
+*.env

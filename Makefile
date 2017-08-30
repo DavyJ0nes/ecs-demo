@@ -13,6 +13,10 @@ all: validate
 
 env ?= dev
 
+edit:
+	$(call yellow, "# editing ${env} tf file...")
+	cd $(CURDIR)/terraform/env/${env} && vi ${env}.tf && cd ${curr_dir}
+
 init:
 	$(call yellow, "# initialising ${env}...")
 	cd $(CURDIR)/terraform/env/${env} && terraform init && cd ${curr_dir}

@@ -1,0 +1,34 @@
+{
+    "containerDefinitions": [
+        {
+            "name": "davyj-ao-ecs-frontend",
+            "image": "373819956540.dkr.ecr.eu-west-1.amazonaws.com/davyj-ao-training-frontend:latest",
+            "memory": "128",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": "8080",
+                    "containerPort": "8082",
+                    "protocol": "tcp"
+                }
+            ],
+            "environment": null,
+            "mountPoints": null,
+            "volumesFrom": null,
+            "hostname": null,
+            "user": null,
+            "workingDirectory": null,
+            "extraHosts": null,
+            "logConfiguration": null,
+            "ulimits": null,
+            "dockerLabels": {
+                "Owner": "davy-jones"
+            }
+        }
+    ],
+    "volumes": [],
+    "networkMode": "bridge",
+    "placementConstraints": [],
+    "family": "davyj-ao-testing",
+    "taskRoleArn": ""
+}

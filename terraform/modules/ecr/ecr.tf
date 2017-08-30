@@ -1,19 +1,19 @@
 # ECR Module
 # DavyJ0nes 2017
 
-resource "aws_ecr_repository" "env" {
-  name = "${var.prefix}-${var.env}-ecr"
+resource "aws_ecr_repository" "app" {
+  name = "${var.prefix}-${var.app}"
 }
 
 resource "aws_ecr_repository_policy" "ecrpolicy" {
-  repository = "${aws_ecr_repository.env.name}"
+  repository = "${aws_ecr_repository.app.name}"
 
   policy = <<POLICY
 {
     "Version": "2008-10-17",
     "Statement": [
         {
-            "Sid": "${var.prefix}-${var.env}-ecr-policy",
+            "Sid": "${var.prefix}-ecr-policy",
             "Effect": "Allow",
             "Principal": "*",
             "Action": [
