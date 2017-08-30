@@ -3,12 +3,12 @@
         {
             "name": "davyj-ao-ecs-frontend",
             "image": "373819956540.dkr.ecr.eu-west-1.amazonaws.com/davyj-ao-training-frontend:latest",
-            "memory": "128",
+            "memory": "64",
             "essential": true,
             "portMappings": [
                 {
-                    "hostPort": "8080",
-                    "containerPort": "8082",
+                    "hostPort": "0",
+                    "containerPort": "8080",
                     "protocol": "tcp"
                 }
             ],

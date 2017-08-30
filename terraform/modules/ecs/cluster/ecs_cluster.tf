@@ -68,6 +68,20 @@ resource "aws_security_group" "asg" {
   }
 
   ingress {
+    from_port       = "8081"
+    to_port         = "8081"
+    protocol        = "tcp"
+    security_groups = ["${aws_security_group.alb.id}"]
+  }
+
+  ingress {
+    from_port       = "8082"
+    to_port         = "8082"
+    protocol        = "tcp"
+    security_groups = ["${aws_security_group.alb.id}"]
+  }
+
+  ingress {
     from_port       = "443"
     to_port         = "443"
     protocol        = "tcp"

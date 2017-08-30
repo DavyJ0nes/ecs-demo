@@ -23,7 +23,7 @@ image: binary
 
 run: image
 	$(call blue, "# Running Docker Image Locally...")
-	docker run -i -t --rm -p ${local_port}:${local_port} ${app}:${version} 
+	docker run -i -t --rm -p ${local_port}:8080 ${app}:${version} 
 
 publish: image
 	$(call blue, "# Publishing Docker Image to Registry...")
