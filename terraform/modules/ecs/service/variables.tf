@@ -17,16 +17,20 @@ variable "name" {
   description = "The name of the task i.e. api, frontend etc"
 }
 
-variable "definition" {
-  description = "The container definition file: https://www.terraform.io/docs/providers/aws/r/ecs_task_definition.html"
-}
-
 variable "cluster_name" {
   description = "The name of the ecs cluster to run the service within"
 }
 
+variable "iam_role" {
+  description = "The ECS IAM role to assume"
+}
+
 variable "desired_count" {
   description = "The desired numer of containers(tasks) to run"
+}
+
+variable "definition_arn" {
+  description = "The ARN of the task definition"
 }
 
 variable "target_group" {

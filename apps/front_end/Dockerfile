@@ -1,4 +1,6 @@
 FROM prom/busybox
+LABEL Name=davyj-ao-training-frontend
+LABEL Version=0.0.1
 MAINTAINER DavyJ0nes <davy.jones@me.com>
 
 RUN mkdir -p /templates/static

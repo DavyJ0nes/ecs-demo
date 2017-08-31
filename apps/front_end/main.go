@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 )
 
 type health struct {
@@ -32,8 +33,17 @@ func main() {
 
 func indexHandler(w http.ResponseWriter, req *http.Request) {
 	logger(req)
+
+	hostnameString, _ := os.Hostname()
+
+	data := struct {
+		Hostname string
+	}{
+		Hostname: hostnameString,
+	}
+
 	w.Header().Set("Content-Type", "text/html")
-	tmpl.ExecuteTemplate(w, "index.html", "")
+	tmpl.ExecuteTemplate(w, "index.html", data)
 }
 
 func healthHandler(w http.ResponseWriter, req *http.Request) {

@@ -54,36 +54,8 @@ resource "aws_security_group" "asg" {
   }
 
   ingress {
-    from_port       = "22"
-    to_port         = "22"
-    protocol        = "tcp"
-    security_groups = ["${aws_security_group.alb.id}"]
-  }
-
-  ingress {
-    from_port       = "80"
-    to_port         = "80"
-    protocol        = "tcp"
-    security_groups = ["${aws_security_group.alb.id}"]
-  }
-
-  ingress {
-    from_port       = "8081"
-    to_port         = "8081"
-    protocol        = "tcp"
-    security_groups = ["${aws_security_group.alb.id}"]
-  }
-
-  ingress {
-    from_port       = "8082"
-    to_port         = "8082"
-    protocol        = "tcp"
-    security_groups = ["${aws_security_group.alb.id}"]
-  }
-
-  ingress {
-    from_port       = "443"
-    to_port         = "443"
+    from_port       = "0"
+    to_port         = "65535"
     protocol        = "tcp"
     security_groups = ["${aws_security_group.alb.id}"]
   }
@@ -115,9 +87,13 @@ resource "aws_alb" "ecs_alb" {
 
 resource "aws_alb_target_group" "ecs_alb_front_end" {
   name     = "${var.prefix}-${var.env}-alb-fe-tg"
-  port     = 8081
+  port     = 8080
   protocol = "HTTP"
   vpc_id   = "${var.vpc_id}"
+
+  health_check {
+    path = "/health"
+  }
 
   tags {
     Owner       = "${var.owner}"
@@ -131,9 +107,13 @@ resource "aws_alb_target_group" "ecs_alb_front_end" {
 
 resource "aws_alb_target_group" "ecs_alb_api" {
   name     = "${var.prefix}-${var.env}-alb-api-tg"
-  port     = 8082
+  port     = 3000
   protocol = "HTTP"
   vpc_id   = "${var.vpc_id}"
+
+  health_check {
+    path = "/health"
+  }
 
   tags {
     Owner       = "${var.owner}"
@@ -161,6 +141,8 @@ resource "aws_alb_listener" "http" {
     target_group_arn = "${aws_alb_target_group.ecs_alb_front_end.arn}"
     type             = "forward"
   }
+
+  depends_on = ["aws_alb.ecs_alb"]
 }
 
 #----------- CREATE ECS ALB DEFAULT HTTPS LISTENER ----------#
@@ -176,11 +158,13 @@ resource "aws_alb_listener" "https" {
     target_group_arn = "${aws_alb_target_group.ecs_alb_front_end.arn}"
     type             = "forward"
   }
+
+  depends_on = ["aws_alb.ecs_alb"]
 }
 
 #----------- CREATE ECS ALB API LISTENER ----------#
 
-resource "aws_alb_listener_rule" "api" {
+resource "aws_alb_listener_rule" "api_https" {
   listener_arn = "${aws_alb_listener.https.arn}"
   priority     = 100
 
@@ -193,9 +177,30 @@ resource "aws_alb_listener_rule" "api" {
     field  = "path-pattern"
     values = ["/v1/data/*"]
   }
+
+  depends_on = ["aws_alb.ecs_alb"]
 }
 
-#---------- CREATE ECS INSTNCE ROLE ----------#
+#----------- CREATE ECS ALB API LISTENER ----------#
+
+resource "aws_alb_listener_rule" "api_http" {
+  listener_arn = "${aws_alb_listener.http.arn}"
+  priority     = 100
+
+  action {
+    target_group_arn = "${aws_alb_target_group.ecs_alb_api.arn}"
+    type             = "forward"
+  }
+
+  condition {
+    field  = "path-pattern"
+    values = ["/v1/data/*"]
+  }
+
+  depends_on = ["aws_alb.ecs_alb"]
+}
+
+#---------- CREATE ECS INSTANCE ROLE ----------#
 
 resource "aws_iam_role" "ecs_instance" {
   name        = "${var.prefix}-${var.env}-ecs_instance-role"
@@ -208,7 +213,7 @@ resource "aws_iam_role" "ecs_instance" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "Service": "ec2.amazonaws.com"
+        "Service": "ecs.amazonaws.com"
       },
       "Effect": "Allow",
       "Sid": ""
@@ -243,7 +248,14 @@ resource "aws_iam_role_policy" "ecs_instance_policy" {
         "ecr:GetDownloadUrlForLayer",
         "ecr:BatchGetImage",
         "logs:CreateLogStream",
-        "logs:PutLogEvents"
+        "logs:PutLogEvents",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:Describe*",
+        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+        "elasticloadbalancing:DeregisterTargets",
+        "elasticloadbalancing:Describe*",
+        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+        "elasticloadbalancing:RegisterTargets"
       ],
       "Resource": "*"
     }
@@ -266,13 +278,91 @@ resource "aws_iam_instance_profile" "profile" {
   role = "${aws_iam_role.ecs_instance.name}"
 }
 
+#---------- CREATE EC2 INSTANCE ROLE ----------#
+
+resource "aws_iam_role" "ec2_instance" {
+  name        = "${var.prefix}-${var.env}-ec2_instance-role"
+  description = "Owner: ${var.owner}"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+#---------- CREATE EC2 INSTANCE ROLE POLICY ----------#
+
+resource "aws_iam_role_policy" "ec2_instance_policy" {
+  name = "${var.prefix}-${var.env}-ec2-policy"
+  role = "${aws_iam_role.ec2_instance.name}"
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecs:CreateCluster",
+        "ecs:DeregisterContainerInstance",
+        "ecs:DiscoverPollEndpoint",
+        "ecs:Poll",
+        "ecs:RegisterContainerInstance",
+        "ecs:StartTelemetrySession",
+        "ecs:Submit*",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:Describe*",
+        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+        "elasticloadbalancing:DeregisterTargets",
+        "elasticloadbalancing:Describe*",
+        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+        "elasticloadbalancing:RegisterTargets"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+POLICY
+}
+
+#---------- ECS ROLE POLICY ATTACHMENT ----------#
+
+resource "aws_iam_role_policy_attachment" "ec2InstanceRole" {
+  role       = "${aws_iam_role.ec2_instance.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+#---------- ECS INSTANCE PROFILE ----------#
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.prefix}-${var.env}-ec2_instance-profile"
+  role = "${aws_iam_role.ec2_instance.name}"
+}
+
 #---------- CREATE ECS ASG LAUNCH CONFIGURATION ----------#
 
 resource "aws_launch_configuration" "ecs_lc" {
   name_prefix          = "${var.prefix}-${var.env}-ecs"
   image_id             = "${var.ami}"
   instance_type        = "${var.instance_type}"
-  iam_instance_profile = "${aws_iam_instance_profile.profile.name}"
+  iam_instance_profile = "${aws_iam_instance_profile.ec2_profile.name}"
   key_name             = "${var.key_name}"
   security_groups      = ["${aws_security_group.asg.id}"]
 
@@ -289,18 +379,15 @@ USERDATA
 #----------- SET UP AUTOSCALING GROUP ----------#
 
 resource "aws_autoscaling_group" "asg" {
-  name              = "${var.prefix}-${var.env}-ecs-asg"
-  max_size          = "${var.max_size}"
-  min_size          = "${var.min_size}"
-  health_check_type = "ELB"
-  enabled_metrics   = ["GroupInServiceInstances", "GroupPendingInstances", "GroupDesiredCapacity", "GroupTerminatingInstances", "GroupTotalInstances"]
-  desired_capacity  = "${var.desired_capacity}"
-
-  # force_delete         = true
+  name                 = "${var.prefix}-${var.env}-ecs-asg"
+  max_size             = "${var.max_size}"
+  min_size             = "${var.min_size}"
+  health_check_type    = "ELB"
+  enabled_metrics      = ["GroupInServiceInstances", "GroupPendingInstances", "GroupDesiredCapacity", "GroupTerminatingInstances", "GroupTotalInstances"]
+  desired_capacity     = "${var.desired_capacity}"
+  target_group_arns    = ["${aws_alb_target_group.ecs_alb_api.arn}", "${aws_alb_target_group.ecs_alb_front_end.arn}"]
   launch_configuration = "${aws_launch_configuration.ecs_lc.name}"
-
-  # load_balancers       = ["${var.prefix}-${var.env}-alb"]
-  vpc_zone_identifier = ["${split(",", var.subnets)}"]
+  vpc_zone_identifier  = ["${split(",", var.subnets)}"]
 
   depends_on = ["aws_launch_configuration.ecs_lc"]
 

@@ -60,17 +60,63 @@ module "ecs_cluster" {
   subnets          = "${module.vpc.public_subnet_ids}"
 }
 
-#---------- CREATE ECS SERVICE ---------#
+#---------- CREATE ECS FRONTEND TASK ---------#
 
+module "ecs_frontend_task" {
+  source              = "../../modules/ecs/task"
+  env                 = "${var.env}"
+  prefix              = "${var.prefix}"
+  service             = "frontend"
+  task_name           = "${var.prefix}-ecs-frontend"
+  task_image_url      = "${var.ecr_main_url}/${var.prefix}-frontend:latest"
+  task_container_port = 8080
+}
 
-# module "ecs_service" {
-#   source  = "../../modules/ecs/service"
-#   env     = "${var.env}"
-#   prefix  = "${var.prefix}"
-#   owner   = "${var.owner}"
-#   cluster = "${module.ecs_cluster.name}"
-# }
+#---------- CREATE ECS FRONTEND SERVICE ---------#
 
+module "ecs_frontend_service" {
+  source         = "../../modules/ecs/service"
+  env            = "${var.env}"
+  prefix         = "${var.prefix}"
+  owner          = "${var.owner}"
+  name           = "frontend"
+  cluster_name   = "${module.ecs_cluster.cluster_name}"
+  desired_count  = 3
+  iam_role       = "${module.ecs_cluster.ecs_iam_role_name}"
+  definition_arn = "${module.ecs_frontend_task.task_definition_arn}"
+  target_group   = "${module.ecs_cluster.frontend_tg_arn}"
+  container_name = "${var.prefix}-ecs-frontend"
+  container_port = 8080
+}
+
+#---------- CREATE ECS API TASK ---------#
+
+module "ecs_api_task" {
+  source              = "../../modules/ecs/task"
+  env                 = "${var.env}"
+  prefix              = "${var.prefix}"
+  service             = "api"
+  task_name           = "${var.prefix}-ecs-api"
+  task_image_url      = "${var.ecr_main_url}/${var.prefix}-api:latest"
+  task_container_port = 3000
+}
+
+#---------- CREATE ECS API SERVICE ---------#
+
+module "ecs_api_service" {
+  source         = "../../modules/ecs/service"
+  env            = "${var.env}"
+  prefix         = "${var.prefix}"
+  owner          = "${var.owner}"
+  name           = "api"
+  cluster_name   = "${module.ecs_cluster.cluster_name}"
+  desired_count  = 3
+  iam_role       = "${module.ecs_cluster.ecs_iam_role_name}"
+  definition_arn = "${module.ecs_api_task.task_definition_arn}"
+  target_group   = "${module.ecs_cluster.api_tg_arn}"
+  container_name = "${var.prefix}-ecs-api"
+  container_port = 3000
+}
 
 #---------- SET UP TESTING LAMBDA --------#
 

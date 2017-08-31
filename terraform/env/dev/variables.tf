@@ -42,6 +42,10 @@ variable "domain_name" {
   description = "The name of the domain to use"
 }
 
+variable "ecr_main_url" {
+  description = "The account specific ecr url pattern. Pattern looks like: <account_number>.dkr.ecr.<region>.amazonaws.com"
+}
+
 variable "ssh_key_pair_name" {
   description = "Name of the EC2 Key pair to use. THIS MUST BE CREATED BEFORE HAND!"
 }
