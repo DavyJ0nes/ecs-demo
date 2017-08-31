@@ -70,6 +70,14 @@ variable "ecs_desired_capacity" {
   description = "The desired size of the ECS Cluster"
 }
 
+variable "ecs_api_desired_capacity" {
+  description = "The desirec running tasks for api service"
+}
+
+variable "ecs_frontend_desired_capacity" {
+  description = "The desirec running tasks for frontend service"
+}
+
 variable "email" {
   description = "A users email address to use for subscribing to an SNS topic"
 }

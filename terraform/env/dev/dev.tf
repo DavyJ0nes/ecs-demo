@@ -81,7 +81,7 @@ module "ecs_frontend_service" {
   owner          = "${var.owner}"
   name           = "frontend"
   cluster_name   = "${module.ecs_cluster.cluster_name}"
-  desired_count  = 3
+  desired_count  = "${var.ecs_frontend_desired_capacity}"
   iam_role       = "${module.ecs_cluster.ecs_iam_role_name}"
   definition_arn = "${module.ecs_frontend_task.task_definition_arn}"
   target_group   = "${module.ecs_cluster.frontend_tg_arn}"
@@ -110,7 +110,7 @@ module "ecs_api_service" {
   owner          = "${var.owner}"
   name           = "api"
   cluster_name   = "${module.ecs_cluster.cluster_name}"
-  desired_count  = 3
+  desired_count  = "${var.ecs_api_desired_capacity}"
   iam_role       = "${module.ecs_cluster.ecs_iam_role_name}"
   definition_arn = "${module.ecs_api_task.task_definition_arn}"
   target_group   = "${module.ecs_cluster.api_tg_arn}"

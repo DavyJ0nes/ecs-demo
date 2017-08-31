@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"math/rand"
 	"net/http"
 )
 
@@ -27,11 +28,14 @@ func main() {
 
 func dataHandler(w http.ResponseWriter, req *http.Request) {
 	logger(req)
+	randomString := generateRandomString()
+
 	data := data{
 		"Json Jill",
-		"s;kje;ifu930iufvnpuf2309piujvn2930ruhfn;cm;a39irpouwj",
+		randomString,
 		"JSON Jill API - v0.0.2 (9363fd9)",
 	}
+
 	js, err := json.Marshal(data)
 	if err != nil {
 		log.Fatal(err)
@@ -58,4 +62,14 @@ func healthHandler(w http.ResponseWriter, req *http.Request) {
 
 func logger(req *http.Request) {
 	log.Printf("%s | %s => %s", req.Method, req.RemoteAddr, req.URL.Path)
+}
+
+// generateRandomString
+func generateRandomString() string {
+	letterBytes := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, 64)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }

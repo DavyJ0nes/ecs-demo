@@ -45,11 +45,6 @@ describe ecs_cluster("#{naming_prefix}-cluster") do
   it { should be_active }
 end
 
-# describe ecs_container_instance("#{naming_prefix}-ecs-asg"), cluster: "#{naming_prefix}-cluster" do
-#   it { should exist }
-#   it { should be_active }
-# end
-
 #---------- TESTING WEB ASG ----------#
 describe autoscaling_group("#{naming_prefix}-ecs-asg") do
   it { should exist }
