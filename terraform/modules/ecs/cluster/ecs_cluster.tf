@@ -175,7 +175,7 @@ resource "aws_alb_listener_rule" "api_https" {
 
   condition {
     field  = "path-pattern"
-    values = ["/v1/data/*"]
+    values = ["/v1/*"]
   }
 
   depends_on = ["aws_alb.ecs_alb"]
@@ -194,7 +194,7 @@ resource "aws_alb_listener_rule" "api_http" {
 
   condition {
     field  = "path-pattern"
-    values = ["/v1/data/*"]
+    values = ["/v1/*"]
   }
 
   depends_on = ["aws_alb.ecs_alb"]

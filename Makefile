@@ -31,6 +31,7 @@ plan: validate
 
 apply: plan
 	$(call yellow, "# Applying plan for ${env}...")
+	cd $(CURDIR)/terraform/env/${env}/lambda_functions && zip canary.zip canary.py
 	cd $(CURDIR)/terraform/env/${env} && terraform apply -var-file=${env}.tfvars && cd $(CURDIR)
 
 test:

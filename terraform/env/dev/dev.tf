@@ -120,18 +120,30 @@ module "ecs_api_service" {
 
 #---------- SET UP TESTING LAMBDA --------#
 
-
-# module "lambda" {}
-
+module "lambda" {
+  source        = "../../modules/lambda"
+  env           = "${var.env}"
+  prefix        = "${var.prefix}"
+  owner         = "${var.owner}"
+  name          = "canary-tester"
+  file          = "${path.cwd}/lambda_functions/canary.zip"
+  handler       = "canary.lambda_handler"
+  runtime       = "python2.7"
+  expected_text = "${var.canary_test_text}"
+  url           = "${var.canary_test_url}"
+  schedule      = "rate(5 minutes)"
+}
 
 #---------- SET UP CLOUDWATCH MONITORING ---------#
 
-
-# module "cloudwatch" {}
-
-
-#---------- SET UP ROUTE 53 ENDPOINT ---------#
-
-
-# module "route53" {}
-
+module "cloudwatch" {
+  source          = "../../modules/cloudwatch"
+  region          = "${var.aws_region}"
+  env             = "${var.env}"
+  prefix          = "${var.prefix}"
+  owner           = "${var.owner}"
+  alb_arn         = "${module.ecs_cluster.alb_arn}"
+  api_tg_arn      = "${module.ecs_cluster.api_tg_arn_suffix}"
+  frontend_tg_arn = "${module.ecs_cluster.frontend_tg_arn_suffix}"
+  lambda_name     = "${var.prefix}-${var.env}-canary-tester"
+}

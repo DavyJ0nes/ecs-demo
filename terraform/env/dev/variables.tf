@@ -81,3 +81,11 @@ variable "ecs_frontend_desired_capacity" {
 variable "email" {
   description = "A users email address to use for subscribing to an SNS topic"
 }
+
+variable "canary_test_text" {
+  description = "What text to look from when running the canary lambda checker"
+}
+
+variable "canary_test_url" {
+  description = "The URL to run using the canary lambda checker"
+}

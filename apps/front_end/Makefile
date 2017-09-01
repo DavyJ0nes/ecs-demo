@@ -31,6 +31,10 @@ publish: image
 	docker tag ${app}:latest "${ECR_REPO}":${version}
 	docker push "${ECR_REPO}":${version} 
 
+test:
+	$(call blue, "# Testing Golang Code...")
+	docker run --rm -it -v "${GOPATH}":/gopath -v "$(CURDIR)":/app -e "GOPATH=/gopath" -w /app golang:1.7 sh -c 'go test -v'
+
 clean: 
 		@rm -f ${app}
 

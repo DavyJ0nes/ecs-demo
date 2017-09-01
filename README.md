@@ -5,8 +5,11 @@ This is a collection of demo Golang, dockerised web applications that are deploy
 
 They are super basic and lightweight and their only purpose is to be used for demoing how to use ECS with an Application Load Balancer and Content/Path based routing.
 
+## Archiutecture
+![Architecture Diagram](docs/images/ecs_demo_arch.jpg)
+
 ## Repo Structure
-This repo is broken up in two parts; the apps and the infrastructure provisioning.
+This repo is divided into two parts; the apps and the infrastructure provisioning.
 
 ### Apps
 The apps are simple microservices that are coded in Golang and built as Docker images.
@@ -30,7 +33,7 @@ make publish
 ```
 
 #### How to test
-<< IN PROGRESS >>
+As each of the applications are built using golang I have created some tests to check their intended functionality. They can be run by changing into the relevant app directory and running: `make test`. This spins up a docker container running Golang, which then runs the test files.
 
 ### Infrastructure
 The infrastructure provisioning is done using [Terraform](https://www.terraform.io). Currently I just have the one stack (dev) but this can be exapanded on to create other environments, such as prod, canary etc.
@@ -39,9 +42,9 @@ The infrastructure provisioning is done using [Terraform](https://www.terraform.
 There is a Makefile within the root of the repository that contains helper commands to help easiliy deploy the artifacts to your AWS cloud.
 
 #### How to test
-Once the stack has been deployed using Terraform then we can use [AWSpec]() to run some acceptance tests on the infrastructure to ensure that everything is running as expected.
+Once the stack has been deployed using Terraform then we can use [AWSpec](https://github.com/k1LoW/awspec) to run some acceptance tests on the infrastructure to ensure that everything is running as expected.
 
-This can be done using the Make file with the following command: `make test`
+This can be done using the Make file with the following command: `make test`. This installs the relevant ruby gems and then runs rake on the test specs.
 
 ```
 ├── Makefile
