@@ -1,3 +1,4 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/DavyJ0nes/ecs-demo)](https://goreportcard.com/report/github.com/DavyJ0nes/ecs-demo)
 # ECS Demo
 
 ## Description
